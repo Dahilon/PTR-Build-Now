@@ -1,0 +1,73 @@
+# Overdose Cluster Intelligence System -- pipeline configuration
+# All parameters that were previously hardcoded inline across scripts
+# live here so they're auditable and changeable without touching source.
+
+paths:
+  data_dir: "data"
+  outputs_dir: "outputs"
+
+simulation:
+  seed_tracts_sites: 42
+  seed_events: 7
+  seed_optimizer_restarts: 0
+  start_date: "2024-01-01"
+  end_date: "2025-12-31"
+  n_tracts: 48
+  tracts_per_site_cluster: 8
+  # Hawkes ground-truth generative parameters
+  branching_ratio: 0.55       # expected offspring events per parent
+  temporal_decay_rate: 0.3333 # beta, 1/days (mean delay ~3 days)
+  spatial_bandwidth_km: 0.8   # std of offspring spatial jitter
+  # background rate calibration
+  background_scale: 0.013
+  deprivation_base: 0.2
+  deprivation_slope: 2.6
+  hot_corridor_multiplier: 3.2
+  # treatment effect near new harm reduction sites
+  treatment_short_term_days: 60
+  treatment_short_term_boost: 0.25
+  treatment_long_term_decline: 0.35
+  treatment_proximity_decay_km: 0.6
+
+harm_reduction_sites:
+  - site_id: HR001
+    name: "Tenderloin Wellness Hub"
+    lat: 37.7838
+    lon: -122.4137
+    open_date: "2024-03-01"
+  - site_id: HR002
+    name: "SoMa Syringe Services"
+    lat: 37.7785
+    lon: -122.4056
+    open_date: "2024-09-15"
+  - site_id: HR003
+    name: "Mission District SSP"
+    lat: 37.7599
+    lon: -122.4148
+    open_date: "2025-01-10"
+  - site_id: HR004
+    name: "Bayview Naloxone Access Point"
+    lat: 37.7355
+    lon: -122.3894
+    open_date: "2025-06-01"
+
+spatial_analysis:
+  knn_k: 5
+  moran_permutations: 999
+  gi_permutations: 999
+  gi_alternative: "two-sided"
+
+event_study:
+  treatment_radius_km: 1.0
+  control_min_distance_km: 2.5
+  window_weeks_pre: 12
+  window_weeks_post: 26
+  early_post_cutoff_weeks: 8
+
+hawkes_fit:
+  n_multistart_restarts: 3
+  optimizer_bounds:
+    log_mu: [-3, 5]
+    logit_n: [-8, 8]
+    log_beta: [-4, 3]
+    log_gamma: [-4, 4]
