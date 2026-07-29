@@ -18,8 +18,12 @@ from src.utils import REPO_ROOT
 REAL_DATA_DIR = REPO_ROOT / "data" / "real"
 DATE_HINTS = ("date", "time", "year", "month", "week")
 GEO_HINTS = (
-    "lat",
-    "lon",
+    "latitude",
+    "longitude",
+    "_lat",
+    "lat_",
+    "_lon",
+    "lon_",
     "location",
     "address",
     "zip",
@@ -38,8 +42,26 @@ def matching_columns(columns, hints) -> list[str]:
     ]
 
 
+def matching_geo_columns(columns) -> list[str]:
+    exact_names = {"lat", "lon", "lng", "x", "y"}
+    return [
+        str(column)
+        for column in columns
+        if str(column).lower() in exact_names
+        or any(hint in str(column).lower() for hint in GEO_HINTS)
+    ]
+
+
 def date_coverage(frame: pd.DataFrame, candidates: list[str]) -> str:
-    for column in candidates:
+    ordered_candidates = sorted(
+        candidates,
+        key=lambda column: (
+            "date" not in column.lower(),
+            column.lower() == "year" or column.lower().endswith("_year"),
+            column,
+        ),
+    )
+    for column in ordered_candidates:
         normalized_name = column.lower()
         if normalized_name == "year" or normalized_name.endswith("_year"):
             years = pd.to_numeric(frame[column], errors="coerce")
@@ -74,7 +96,7 @@ def profile_file(path: Path) -> dict:
         }
 
     date_columns = matching_columns(frame.columns, DATE_HINTS)
-    geo_columns = matching_columns(frame.columns, GEO_HINTS)
+    geo_columns = matching_geo_columns(frame.columns)
     cell_count = frame.shape[0] * frame.shape[1]
     missing_pct = (
         float(frame.isna().sum().sum() / cell_count * 100)

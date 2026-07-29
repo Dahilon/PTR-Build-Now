@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
 .DS_Store
-data/real/
+data/real/*
+!data/real/triage.md
