@@ -17,9 +17,11 @@ Tests targeting the actual bugs found while building this pipeline:
 """
 import sys
 from collections import deque
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 from scipy.optimize import minimize
 
@@ -31,6 +33,14 @@ from src.utils import (
     load_tracts,
     pairwise_dist_km,
 )
+
+
+def load_script_module(filename):
+    path = Path(__file__).resolve().parent.parent / "scripts" / filename
+    spec = spec_from_file_location(path.stem, path)
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_dist_km_zero_for_same_point():
@@ -76,6 +86,43 @@ def test_csv_loaders_preserve_tract_id_leading_zero():
         assert frame["tract_id"].map(type).eq(str).all()
         assert frame["tract_id"].str.fullmatch(r"\d{11}").all()
         assert frame["tract_id"].str.startswith("0").all()
+
+
+def test_real_data_fetch_helpers_are_deterministic():
+    fetcher = load_script_module("00_fetch_real_data.py")
+    assert fetcher.safe_slug("Drug Overdose Deaths / SF!") == "drug-overdose-deaths-sf"
+    assert fetcher.MAX_ROWS_PER_DATASET == 100_000
+    assert fetcher.WEATHER_START == fetcher.date(2024, 1, 1)
+    assert fetcher.WEATHER_END == fetcher.date(2025, 12, 31)
+
+
+def test_weather_aggregation_fills_full_requested_date_range():
+    fetcher = load_script_module("00_fetch_real_data.py")
+    observations = [
+        {
+            "properties": {
+                "timestamp": "2024-01-01T18:00:00+00:00",
+                "temperature": {"value": 10.0},
+                "precipitationLastHour": {"value": 0.001},
+            }
+        },
+        {
+            "properties": {
+                "timestamp": "2024-01-01T20:00:00+00:00",
+                "temperature": {"value": 14.0},
+                "precipitationLastHour": {"value": None},
+            }
+        },
+    ]
+    daily = fetcher.aggregate_daily_weather(
+        observations,
+        fetcher.date(2024, 1, 1),
+        fetcher.date(2024, 1, 2),
+    )
+    assert daily["date"].tolist() == ["2024-01-01", "2024-01-02"]
+    assert daily.loc[0, "temperature_mean_c"] == pytest.approx(12.0)
+    assert daily.loc[0, "precipitation_mm"] == pytest.approx(1.0)
+    assert pd.isna(daily.loc[1, "observation_count"])
 
 
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):

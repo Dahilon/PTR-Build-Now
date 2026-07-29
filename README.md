@@ -49,11 +49,11 @@ deciding where to deploy limited resources next?
   (tract-as-dimension) refit would sharpen this.
 
 ## Data note
-This build environment has no live network access to open-data portals
-(DataSF, CDC, Census API). The pipeline runs on notional data calibrated
-to match real, publicly documented SF overdose geography (Tenderloin/SoMa
-concentration). Swap in real DataSF/CDPH exports — same schema — before
-final submission.
+The analytical pipeline still runs on notional data calibrated to match
+publicly documented SF overdose geography (Tenderloin/SoMa concentration).
+The optional bulk fetcher downloads and profiles candidate real datasets;
+mapping their source-specific schemas into the analytical tables remains a
+separate step before final submission.
 
 ## Setup
 Python 3.12 or newer is required by the pinned dependencies (notably
@@ -61,6 +61,8 @@ libpysal 4.15).
 
 ```
 pip install -r requirements.txt
+python3 scripts/00_fetch_real_data.py
+python3 scripts/00b_profile_real_data.py
 python3 scripts/01_generate_tracts_and_sites.py
 python3 scripts/02_simulate_events.py
 python3 scripts/03_spatial_autocorrelation.py
@@ -69,6 +71,18 @@ python3 scripts/05_hawkes_fit.py
 pytest tests/
 ```
 
+The optional real-data fetch is a one-time bulk pull: it searches DataSF
+and CDC Socrata catalogs, downloads each matching table in pages (up to
+100,000 rows per dataset), and downloads daily KSFO weather matching the
+2024-01-01 through 2025-12-31 event window. It tries weather.gov first and
+uses NOAA GHCN daily summaries for the same station when that historical
+window is no longer retained by weather.gov. It does not schedule updates,
+perform incremental queries, or write last-run state. Bulk files in
+`data/real/` are local inputs and are intentionally excluded from Git.
+SAMHSA, CDPH dashboard scraping, and NFLIS remain out of scope because they
+do not provide suitable unrestricted APIs for this workflow.
+
 ## Status / next steps
-Full pipeline runs clean end-to-end, 8/8 tests passing. Not yet done:
-frontend/visualization layer, real data ingestion, Foundry build itself.
+Full pipeline runs clean end-to-end, 10/10 tests passing. Not yet done:
+frontend/visualization layer, real-source schema integration, Foundry build
+itself.
