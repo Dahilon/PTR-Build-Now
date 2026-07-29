@@ -150,6 +150,19 @@ def test_real_aggregate_normalization_preserves_counts_and_citywide_scope():
     assert normalized["event_id"].is_unique
 
 
+def test_real_analysis_modes_reject_unsupported_precision():
+    cfg = load_config()
+    assert cfg["spatial_analysis"]["geography_level"] == "neighborhood"
+    assert cfg["hawkes_fit"]["data_source"] == "real"
+
+    hawkes = load_script_module("05_hawkes_fit.py")
+    with pytest.raises(
+        hawkes.AggregateTemporalResolutionError,
+        match="weekly aggregate",
+    ):
+        hawkes.load_hawkes_events(cfg)
+
+
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):
     """Minimal standalone recursive Hawkes simulator for test purposes --
     mirrors the fix applied to scripts/02_simulate_events.py: children are

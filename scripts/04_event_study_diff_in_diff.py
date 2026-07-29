@@ -1,5 +1,10 @@
 """
 Event-study diff-in-differences around each harm-reduction site's opening.
+
+This remains simulated-only. The triaged real DataSF files contain citywide
+service metrics but no harm-reduction site locations or verified opening
+dates. Do not point this design at real outcomes until those dates are
+manually sourced and the treatment/control geography is supportable.
 """
 import sys
 from pathlib import Path
@@ -14,6 +19,10 @@ from src.utils import load_config, get_logger, load_tracts, load_events, load_si
 log = get_logger(__name__)
 cfg = load_config()
 es_cfg = cfg["event_study"]
+log.info(
+    "Event-study DiD is simulated-only: real site locations/opening dates "
+    "are not available in the triaged DataSF files."
+)
 
 tracts = load_tracts(cfg).set_index("tract_id")
 events = load_events(cfg)

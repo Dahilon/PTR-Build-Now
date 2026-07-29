@@ -1,0 +1,4 @@
+data_source=real
+status=not_fitted
+event_type=ems_overdose_911_response
+reason=real EMS data contains weekly aggregate event_count weights, not exact individual event timestamps; continuous-time Hawkes MLE would be misleading

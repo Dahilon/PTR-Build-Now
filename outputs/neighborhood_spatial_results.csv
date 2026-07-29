@@ -1,0 +1,2 @@
+neighborhood,event_count,aggregate_rows,lat,lon,status,reason
+Citywide,6468,106,,,not_estimable,only 1 distinct neighborhood is available; at least 3 are required

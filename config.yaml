@@ -61,6 +61,8 @@ harm_reduction_sites:
     open_date: "2025-06-01"
 
 spatial_analysis:
+  geography_level: "neighborhood"  # tract (simulated) or neighborhood (real)
+  real_event_type: "ems_overdose_911_response"
   knn_k: 5
   moran_permutations: 999
   gi_permutations: 999
@@ -74,6 +76,8 @@ event_study:
   early_post_cutoff_weeks: 8
 
 hawkes_fit:
+  data_source: "real"  # simulated or real
+  real_event_type: "ems_overdose_911_response"
   n_multistart_restarts: 3
   optimizer_seed: 0
   optimizer_bounds:

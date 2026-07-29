@@ -144,3 +144,24 @@ until those dates are manually sourced and verified.
 `event_count` must remain a weight on an aggregate observation. Expanding
 these counts into supposedly exact individual incidents would create
 fabricated timestamps and is not appropriate for spatial analysis.
+
+## Analysis readiness
+
+The configurable real-data analysis paths were exercised with the normalized
+output:
+
+- `spatial_analysis.geography_level: neighborhood` writes
+  `outputs/neighborhood_spatial_results.csv`, but reports
+  `status=not_estimable`: only the `Citywide` placeholder exists and it has
+  no centroid. No real Moran's I or Gi* number is claimed.
+- `hawkes_fit.data_source: real` writes
+  `outputs/hawkes_fit_results_real.txt`, but reports `status=not_fitted`:
+  weekly `event_count` weights are not exact event timestamps, so expanding
+  them would manufacture temporal excitation.
+- `scripts/04_event_study_diff_in_diff.py` remains simulated-only because
+  there are no verified harm-reduction site locations/opening dates.
+
+The existing tract spatial and Hawkes fits remain available by setting
+`spatial_analysis.geography_level: tract` and
+`hawkes_fit.data_source: simulated`. Those results continue to describe the
+notional dataset only.
