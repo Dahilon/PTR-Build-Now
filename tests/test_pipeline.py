@@ -125,6 +125,31 @@ def test_weather_aggregation_fills_full_requested_date_range():
     assert pd.isna(daily.loc[1, "observation_count"])
 
 
+def test_real_aggregate_normalization_preserves_counts_and_citywide_scope():
+    loader = load_script_module("06_load_real_data.py")
+    source = pd.DataFrame(
+        {
+            "week_start_date": ["2023-12-31", "2024-01-07", "2024-01-14"],
+            "calls": [99, 12, 15],
+        }
+    )
+    normalized = loader.normalize_aggregate(
+        source,
+        date_column="week_start_date",
+        count_column="calls",
+        event_type="ems_overdose_911_response",
+        granularity="weekly",
+        source_file="example.csv",
+        id_prefix="REAL-EMS",
+        window_start=pd.Timestamp("2024-01-01"),
+        window_end=pd.Timestamp("2024-12-31"),
+    )
+    assert normalized["event_count"].tolist() == [12, 15]
+    assert normalized["neighborhood"].eq("Citywide").all()
+    assert normalized[["lat", "lon"]].isna().all().all()
+    assert normalized["event_id"].is_unique
+
+
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):
     """Minimal standalone recursive Hawkes simulator for test purposes --
     mirrors the fix applied to scripts/02_simulate_events.py: children are

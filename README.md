@@ -48,6 +48,26 @@ deciding where to deploy limited resources next?
   events look like temporal contagion; a per-tract or multivariate
   (tract-as-dimension) refit would sharpen this.
 
+## Real-data findings
+
+The bulk-download triage found four genuinely relevant DataSF tables, all
+published as citywide aggregates rather than geolocated incidents:
+
+- For the shared 2024-2025 window, the EMS table contains 106 weekly rows
+  representing 6,468 overdose-related 911 calls.
+- The preliminary death table contains 24 monthly rows representing 1,261
+  overdose deaths over the same window.
+- The substance-use-services table includes naloxone and opioid-treatment
+  metrics but no site names, locations, or opening dates.
+- No relevant table contains a tract, neighborhood, address, or coordinate.
+  Normalized real rows therefore use `neighborhood="Citywide"` and cannot
+  support a real spatial-clustering estimate yet.
+- All 130 normalized EMS/death aggregate rows join successfully to the KSFO
+  daily weather record.
+
+These are published aggregate counts, not individual event records. Real and
+simulated results must not be interpreted as equivalent evidence.
+
 ## Data note
 The analytical pipeline still runs on notional data calibrated to match
 publicly documented SF overdose geography (Tenderloin/SoMa concentration).
@@ -68,6 +88,7 @@ python3 scripts/02_simulate_events.py
 python3 scripts/03_spatial_autocorrelation.py
 python3 scripts/04_event_study_diff_in_diff.py
 python3 scripts/05_hawkes_fit.py
+python3 scripts/06_load_real_data.py
 pytest tests/
 ```
 
@@ -83,6 +104,6 @@ SAMHSA, CDPH dashboard scraping, and NFLIS remain out of scope because they
 do not provide suitable unrestricted APIs for this workflow.
 
 ## Status / next steps
-Full pipeline runs clean end-to-end, 10/10 tests passing. Not yet done:
+Full pipeline runs clean end-to-end, 11/11 tests passing. Not yet done:
 frontend/visualization layer, real-source schema integration, Foundry build
 itself.

@@ -126,3 +126,21 @@ built in this pass.
 The real data also contains no harm-reduction site locations or opening
 dates. The difference-in-differences script therefore remains simulated-only
 until those dates are manually sourced and verified.
+
+## Normalization checkpoint
+
+`scripts/06_load_real_data.py` writes
+`data/real_events_normalized.csv` for the common 2024-01-01 through
+2025-12-31 analysis window:
+
+- 106 weekly EMS aggregate rows representing 6,468 overdose-related 911
+  calls, dated 2024-01-01 through 2025-12-28.
+- 24 monthly death aggregate rows representing 1,261 preliminary overdose
+  deaths, dated 2024-01-01 through 2025-12-01.
+- All 130 rows use `neighborhood = "Citywide"` and null `lat`/`lon`.
+- All 130 rows join to complete KSFO temperature and precipitation values
+  on their published period-start date (100% join success).
+
+`event_count` must remain a weight on an aggregate observation. Expanding
+these counts into supposedly exact individual incidents would create
+fabricated timestamps and is not appropriate for spatial analysis.

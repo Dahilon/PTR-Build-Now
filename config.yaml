@@ -6,6 +6,16 @@ paths:
   data_dir: "data"
   outputs_dir: "outputs"
 
+real_data:
+  input_dir: "data/real"
+  normalized_events_file: "data/real_events_normalized.csv"
+  event_window_start: "2024-01-01"
+  event_window_end: "2025-12-31"
+  ems_file: "datasf_ed3a-sn39_overdose-related-911-responses-by-emergency-medical-services.csv"
+  deaths_file: "datasf_jxrr-bmra_preliminary-unintentional-drug-overdose-deaths.csv"
+  services_file: "datasf_ubf6-e57x_san-francisco-department-of-public-health-substance-use-serv.csv"
+  weather_file: "nws_ksfo_daily_weather_2024_2025.csv"
+
 simulation:
   seed_tracts_sites: 42
   seed_events: 7
