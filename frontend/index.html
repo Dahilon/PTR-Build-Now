@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>San Francisco Overdose Analysis</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQ3ynhW6gMZjdO67eAhtyGVh2p65t0M="
+    crossorigin=""
+  >
+  <style>
+    :root {
+      --bg: #f3f5f2;
+      --surface: #ffffff;
+      --surface-soft: #eef1ed;
+      --ink: #1f2926;
+      --muted: #66716d;
+      --line: #d9dfda;
+      --green: #315e55;
+      --green-soft: #dce8e2;
+      --blue: #4d7288;
+      --rust: #a45b44;
+      --hot: #b5524c;
+      --cold: #527c97;
+      --neutral: #aaaDA7;
+      --warning-bg: #f5ecdf;
+      --warning-line: #d4a66f;
+      --shadow: 0 1px 2px rgba(24, 38, 32, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 28px clamp(18px, 3vw, 48px) 48px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--green);
+      font-size: 0.74rem;
+      font-weight: 750;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 3vw, 2.35rem);
+      font-weight: 680;
+      letter-spacing: -0.035em;
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .context-badge {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border: 1px solid #bfcfc8;
+      border-radius: 999px;
+      color: var(--green);
+      background: var(--green-soft);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .tablist {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #e7ebe7;
+      width: fit-content;
+    }
+
+    .tab {
+      min-width: 164px;
+      padding: 9px 15px;
+      border: 0;
+      border-radius: 7px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 650;
+    }
+
+    .tab[aria-selected="true"] {
+      color: var(--ink);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .tab:focus-visible,
+    select:focus-visible {
+      outline: 3px solid rgba(77, 114, 136, 0.3);
+      outline-offset: 2px;
+    }
+
+    .tabpanel[hidden] {
+      display: none;
+    }
+
+    .panel-intro {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 16px;
+    }
+
+    .panel-intro h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+    }
+
+    .panel-intro p {
+      max-width: 710px;
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .data-note {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.72fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 20px 13px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .card-header h3 {
+      margin: 0;
+      font-size: 0.96rem;
+      font-weight: 700;
+    }
+
+    .card-header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .wide {
+      grid-column: 1;
+    }
+
+    .side {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .second-row {
+      grid-column: 1 / -1;
+    }
+
+    #hotspot-map {
+      height: 440px;
+      border-radius: 0 0 12px 12px;
+      background: #e8ece8;
+    }
+
+    .legend {
+      display: grid;
+      gap: 7px;
+      padding: 12px 14px;
+      border: 1px solid rgba(31, 41, 38, 0.15);
+      border-radius: 7px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 1px 4px rgba(31, 41, 38, 0.12);
+      font-size: 0.72rem;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .stats-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 20px;
+    }
+
+    .stats-card h3 {
+      margin: 0 0 4px;
+      font-size: 0.96rem;
+    }
+
+    .stats-card > p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .metric {
+      padding: 17px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .metric:first-of-type {
+      border-top: 0;
+      padding-top: 3px;
+    }
+
+    .metric-value {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--green);
+      font-size: clamp(1.65rem, 3vw, 2.1rem);
+      font-weight: 720;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+    }
+
+    .metric-label {
+      display: block;
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 680;
+    }
+
+    .metric-detail {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .metric-down {
+      color: var(--green);
+      font-size: 1.35rem;
+    }
+
+    .select-group {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .select-group label {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 650;
+    }
+
+    select {
+      max-width: 250px;
+      padding: 7px 28px 7px 9px;
+      border: 1px solid #c9d1cc;
+      border-radius: 7px;
+      color: var(--ink);
+      background: var(--surface);
+      font-size: 0.8rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 340px;
+      padding: 18px 18px 14px;
+    }
+
+    .chart-wrap.tall {
+      height: 380px;
+    }
+
+    .real-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .real-grid .stats-card,
+    .real-grid .callout {
+      grid-column: span 1;
+    }
+
+    .callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
+      padding: 18px 20px;
+      border-left: 4px solid var(--warning-line);
+      background: var(--warning-bg);
+    }
+
+    .callout-mark {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      color: #76502d;
+      background: #ead5b9;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .callout h3 {
+      margin: 0 0 5px;
+      font-size: 0.9rem;
+    }
+
+    .callout p {
+      margin: 0;
+      color: #5f554b;
+      font-size: 0.82rem;
+    }
+
+    .status {
+      display: none;
+      margin-bottom: 16px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: 0.82rem;
+    }
+
+    .status.visible {
+      display: block;
+    }
+
+    .status.error {
+      border-color: #d6aaa0;
+      color: #743a30;
+      background: #fbefec;
+    }
+
+    .leaflet-popup-content {
+      margin: 12px 14px;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    .popup-title {
+      margin-bottom: 4px;
+      font-weight: 750;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid,
+      .real-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wide,
+      .side,
+      .second-row,
+      .real-grid .stats-card,
+      .real-grid .callout {
+        grid-column: 1;
+        grid-row: auto;
+      }
+
+      #hotspot-map {
+        height: 380px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        padding: 20px 14px 36px;
+      }
+
+      .topbar,
+      .panel-intro,
+      .card-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .context-badge,
+      .data-note {
+        align-self: flex-start;
+      }
+
+      .tablist {
+        width: 100%;
+      }
+
+      .tab {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .select-group {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      select {
+        width: 100%;
+        max-width: none;
+      }
+
+      .chart-wrap,
+      .chart-wrap.tall {
+        height: 310px;
+        padding: 12px 10px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">San Francisco · Public health decision support</p>
+        <h1>Overdose analysis dashboard</h1>
+        <p class="subtitle">
+          A clear separation between the validated simulated-methodology demo and the findings supported by public SF data.
+        </p>
+      </div>
+      <span class="context-badge">2024–2025 analysis window</span>
+    </header>
+
+    <nav class="tablist" role="tablist" aria-label="Analysis data source">
+      <button
+        class="tab"
+        id="simulated-tab"
+        role="tab"
+        aria-selected="true"
+        aria-controls="simulated-panel"
+        data-tab="simulated"
+        type="button"
+      >Simulated Analysis</button>
+      <button
+        class="tab"
+        id="real-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="real-panel"
+        data-tab="real"
+        type="button"
+      >Real SF Data</button>
+    </nav>
+
+    <div id="load-status" class="status visible" role="status">Loading repository data…</div>
+
+    <section
+      class="tabpanel"
+      id="simulated-panel"
+      role="tabpanel"
+      aria-labelledby="simulated-tab"
+      data-testid="simulated-panel"
+    >
+      <div class="panel-intro">
+        <div>
+          <h2>Validated methodology demo</h2>
+          <p>Spatial hotspots, intervention timing, and self-excitation are demonstrated on simulated tract-level events.</p>
+        </div>
+        <span class="data-note">Source: simulated outputs</span>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="card wide">
+          <header class="card-header">
+            <div>
+              <h3>Tract hotspot classification</h3>
+              <p>Getis-Ord Gi* permutation result at each simulated tract centroid</p>
+            </div>
+          </header>
+          <div id="hotspot-map" aria-label="Map of simulated San Francisco tract hotspot results"></div>
+        </article>
+
+        <aside class="card side stats-card" aria-label="Simulated analysis headline statistics">
+          <h3>Headline statistics</h3>
+          <p>Validated values reported in the analysis outputs.</p>
+          <div class="metric">
+            <span class="metric-value">0.757</span>
+            <span class="metric-label">Hawkes branching ratio</span>
+            <span class="metric-detail">About 76% of modeled events are attributed to self-excitation.</span>
+          </div>
+          <div class="metric">
+            <span class="metric-value">0.615</span>
+            <span class="metric-label">Global Moran’s I</span>
+            <span class="metric-detail">Permutation p = 0.001 · strong spatial autocorrelation.</span>
+          </div>
+          <div class="metric">
+            <span class="metric-value">48</span>
+            <span class="metric-label">Simulated tracts</span>
+            <span class="metric-detail">Four harm-reduction sites are overlaid on the map.</span>
+          </div>
+        </aside>
+
+        <article class="card second-row">
+          <header class="card-header">
+            <div>
+              <h3>Intervention event study</h3>
+              <p>Average weekly events per tract relative to each harm-reduction site opening</p>
+            </div>
+            <div class="select-group">
+              <label for="site-select">Site</label>
+              <select id="site-select" data-testid="site-select" aria-label="Choose harm reduction site"></select>
+            </div>
+          </header>
+          <div class="chart-wrap">
+            <canvas id="event-study-chart" aria-label="Treated and control weekly event counts around site opening"></canvas>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section
+      class="tabpanel"
+      id="real-panel"
+      role="tabpanel"
+      aria-labelledby="real-tab"
+      data-testid="real-panel"
+      hidden
+    >
+      <div class="panel-intro">
+        <div>
+          <h2>Findings from real SF public data</h2>
+          <p>Aggregate EMS and mortality series support trend and weather tests, but not tract-level cluster detection.</p>
+        </div>
+        <span class="data-note">Source: real public exports</span>
+      </div>
+
+      <div class="real-grid">
+        <article class="card">
+          <header class="card-header">
+            <div>
+              <h3>Overdose indicators over time</h3>
+              <p>Weekly EMS calls and monthly deaths, with separate linear trend lines</p>
+            </div>
+          </header>
+          <div class="chart-wrap tall">
+            <canvas id="real-trend-chart" aria-label="Weekly EMS calls and monthly overdose deaths with trends"></canvas>
+          </div>
+        </article>
+
+        <article class="card">
+          <header class="card-header">
+            <div>
+              <h3>Weekly EMS calls and temperature</h3>
+              <p>Joined mean temperature shown on a separate axis</p>
+            </div>
+          </header>
+          <div class="chart-wrap tall">
+            <canvas id="weather-chart" aria-label="Weekly EMS calls and mean temperature"></canvas>
+          </div>
+        </article>
+
+        <aside class="card stats-card" aria-label="Real data headline findings">
+          <h3>What the public data supports</h3>
+          <p>Plain-language results from the real aggregate time-series analysis.</p>
+          <div class="metric">
+            <span class="metric-value metric-down">↓ Significant</span>
+            <span class="metric-label">Weekly EMS calls declined</span>
+            <span class="metric-detail">Linear trend p = 0.0085 · 106 weekly observations.</span>
+          </div>
+          <div class="metric">
+            <span class="metric-value metric-down">↓ Significant</span>
+            <span class="metric-label">Monthly deaths declined</span>
+            <span class="metric-detail">Linear trend p = 0.0042 · 24 monthly observations.</span>
+          </div>
+          <div class="metric">
+            <span class="metric-value metric-down">r = −0.24</span>
+            <span class="metric-label">Weak cold-weather correlation</span>
+            <span class="metric-detail">p = 0.014 · statistically detectable, but modest in size.</span>
+          </div>
+        </aside>
+
+        <aside class="card callout">
+          <span class="callout-mark" aria-hidden="true">i</span>
+          <div>
+            <h3>Resolution is the operational constraint</h3>
+            <p>
+              Public data has no coordinates or exact timestamps — that’s why cluster/contagion detection isn’t possible here,
+              and why this kind of tool needs Foundry-level access to internal city data.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script>
+    const DATA_PATHS = {
+      hotspots: "../outputs/tract_hotspot_results.csv",
+      sites: "../data/harm_reduction_sites.csv",
+      eventStudy: "../outputs/event_study_panel.csv",
+      realEvents: "../data/real_events_normalized.csv"
+    };
+
+    const palette = {
+      ink: "#1f2926",
+      muted: "#66716d",
+      grid: "#e5e9e5",
+      green: "#315e55",
+      blue: "#4d7288",
+      rust: "#a45b44",
+      hot: "#b5524c",
+      cold: "#527c97",
+      neutral: "#aaada7"
+    };
+
+    const state = {
+      hotspots: [],
+      sites: [],
+      eventStudy: [],
+      realEvents: [],
+      map: null,
+      eventChart: null,
+      trendChart: null,
+      weatherChart: null
+    };
+
+    Chart.defaults.color = palette.muted;
+    Chart.defaults.borderColor = palette.grid;
+    Chart.defaults.font.family = 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+    function setStatus(message, isError = false) {
+      const status = document.getElementById("load-status");
+      status.textContent = message;
+      status.classList.toggle("error", isError);
+      status.classList.toggle("visible", Boolean(message));
+    }
+
+    async function loadCsv(path) {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error(`${path} returned ${response.status}`);
+      }
+      const text = await response.text();
+      const parsed = Papa.parse(text, {
+        header: true,
+        dynamicTyping: field => !["tract_id", "site_id", "event_id", "date", "open_date"].includes(field),
+        skipEmptyLines: "greedy"
+      });
+      if (parsed.errors.length) {
+        const serious = parsed.errors.find(error => error.code !== "UndetectableDelimiter");
+        if (serious) {
+          throw new Error(`${path}: ${serious.message}`);
+        }
+      }
+      return parsed.data;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatDate(dateText) {
+      const date = new Date(`${dateText}T00:00:00`);
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        year: "2-digit"
+      }).format(date);
+    }
+
+    function getHotspotClass(label) {
+      const normalized = String(label || "").toUpperCase();
+      if (normalized.includes("HOT SPOT")) return "hot";
+      if (normalized.includes("COLD SPOT")) return "cold";
+      return "neutral";
+    }
+
+    function initMap() {
+      state.map = L.map("hotspot-map", {
+        scrollWheelZoom: false,
+        zoomControl: true
+      });
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(state.map);
+
+      const bounds = [];
+      state.hotspots.forEach(row => {
+        const lat = Number(row.lat);
+        const lon = Number(row.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+        const classification = getHotspotClass(row.hotspot_type);
+        const color = palette[classification];
+        const marker = L.circleMarker([lat, lon], {
+          radius: 7.5,
+          color: "#ffffff",
+          weight: 1.5,
+          fillColor: color,
+          fillOpacity: 0.88
+        }).addTo(state.map);
+
+        marker.bindPopup(`
+          <div class="popup-title">Tract ${escapeHtml(row.tract_id)}</div>
+          <div>${escapeHtml(row.hotspot_type)}</div>
+          <div>${Number(row.event_count).toLocaleString()} events · ${Number(row.rate_per_1k).toFixed(1)} per 1,000</div>
+          <div>Gi* z = ${Number(row.gi_zscore).toFixed(2)} · p = ${Number(row.gi_pvalue).toFixed(3)}</div>
+        `);
+        bounds.push([lat, lon]);
+      });
+
+      state.sites.forEach(site => {
+        const lat = Number(site.lat);
+        const lon = Number(site.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const marker = L.circleMarker([lat, lon], {
+          radius: 9,
+          color: "#ffffff",
+          weight: 2.5,
+          fillColor: palette.green,
+          fillOpacity: 1
+        }).addTo(state.map);
+        marker.bindPopup(`
+          <div class="popup-title">${escapeHtml(site.name)}</div>
+          <div>${escapeHtml(site.site_id)}</div>
+          <div>Opened ${escapeHtml(site.open_date)}</div>
+        `);
+      });
+
+      if (bounds.length) {
+        state.map.fitBounds(bounds, { padding: [24, 24] });
+      } else {
+        state.map.setView([37.7749, -122.4194], 12);
+      }
+
+      const legend = L.control({ position: "bottomright" });
+      legend.onAdd = () => {
+        const element = L.DomUtil.create("div", "legend");
+        element.innerHTML = `
+          <div class="legend-row"><span class="legend-dot" style="background:${palette.hot}"></span>Hot spot</div>
+          <div class="legend-row"><span class="legend-dot" style="background:${palette.cold}"></span>Cold spot</div>
+          <div class="legend-row"><span class="legend-dot" style="background:${palette.neutral}"></span>Not significant</div>
+          <div class="legend-row"><span class="legend-dot" style="background:${palette.green}; box-shadow:0 0 0 2px white"></span>Harm-reduction site</div>
+        `;
+        return element;
+      };
+      legend.addTo(state.map);
+    }
+
+    function populateSiteSelect() {
+      const select = document.getElementById("site-select");
+      const panelSiteIds = [...new Set(state.eventStudy.map(row => String(row.site_id)))];
+      const sitesById = new Map(state.sites.map(site => [String(site.site_id), site]));
+
+      panelSiteIds.forEach(siteId => {
+        const site = sitesById.get(siteId);
+        const option = document.createElement("option");
+        option.value = siteId;
+        option.textContent = site ? `${site.name} (${siteId})` : siteId;
+        select.appendChild(option);
+      });
+
+      select.addEventListener("change", () => renderEventStudy(select.value));
+      if (panelSiteIds.length) renderEventStudy(panelSiteIds[0]);
+    }
+
+    function summarizeEventStudy(siteId) {
+      const rows = state.eventStudy.filter(row => String(row.site_id) === String(siteId));
+      const grouped = new Map();
+      rows.forEach(row => {
+        const offset = Number(row.week_offset);
+        const treated = Number(row.treated) === 1 ? "treated" : "control";
+        const key = `${offset}:${treated}`;
+        const current = grouped.get(key) || { sum: 0, n: 0 };
+        current.sum += Number(row.n_events);
+        current.n += 1;
+        grouped.set(key, current);
+      });
+
+      const offsets = [...new Set(rows.map(row => Number(row.week_offset)))].sort((a, b) => a - b);
+      const values = group => offsets.map(offset => {
+        const entry = grouped.get(`${offset}:${group}`);
+        return entry ? entry.sum / entry.n : null;
+      });
+      return { offsets, treated: values("treated"), control: values("control") };
+    }
+
+    const siteOpeningLine = {
+      id: "siteOpeningLine",
+      afterDatasetsDraw(chart) {
+        const index = chart.data.labels.indexOf(0);
+        if (index < 0) return;
+        const x = chart.scales.x.getPixelForValue(index);
+        const { top, bottom } = chart.chartArea;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = "#7c8581";
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = palette.muted;
+        ctx.font = "11px Inter, sans-serif";
+        ctx.fillText("Site opens", Math.min(x + 6, chart.chartArea.right - 54), top + 13);
+        ctx.restore();
+      }
+    };
+
+    function renderEventStudy(siteId) {
+      const summary = summarizeEventStudy(siteId);
+      if (state.eventChart) state.eventChart.destroy();
+      state.eventChart = new Chart(document.getElementById("event-study-chart"), {
+        type: "line",
+        data: {
+          labels: summary.offsets,
+          datasets: [
+            {
+              label: "Treated tracts",
+              data: summary.treated,
+              borderColor: palette.rust,
+              backgroundColor: palette.rust,
+              borderWidth: 2.3,
+              pointRadius: 1.5,
+              pointHoverRadius: 4,
+              tension: 0.18
+            },
+            {
+              label: "Control tracts",
+              data: summary.control,
+              borderColor: palette.blue,
+              backgroundColor: palette.blue,
+              borderWidth: 2.3,
+              pointRadius: 1.5,
+              pointHoverRadius: 4,
+              tension: 0.18
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } },
+            tooltip: {
+              callbacks: {
+                title: items => `Week ${items[0].label} relative to opening`,
+                label: item => `${item.dataset.label}: ${item.parsed.y.toFixed(2)} events per tract`
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: "Weeks relative to site opening" },
+              grid: { display: false },
+              ticks: { maxTicksLimit: 13 }
+            },
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Mean weekly events per tract" }
+            }
+          }
+        },
+        plugins: [siteOpeningLine]
+      });
+    }
+
+    function regressionValues(rows) {
+      if (!rows.length) return [];
+      const times = rows.map(row => new Date(`${row.date}T00:00:00`).getTime() / 86400000);
+      const values = rows.map(row => Number(row.event_count));
+      const xMean = times.reduce((sum, value) => sum + value, 0) / times.length;
+      const yMean = values.reduce((sum, value) => sum + value, 0) / values.length;
+      const numerator = times.reduce((sum, value, index) => sum + (value - xMean) * (values[index] - yMean), 0);
+      const denominator = times.reduce((sum, value) => sum + (value - xMean) ** 2, 0);
+      const slope = denominator ? numerator / denominator : 0;
+      const intercept = yMean - slope * xMean;
+      return times.map(value => intercept + slope * value);
+    }
+
+    function renderRealTrendChart() {
+      const ems = state.realEvents
+        .filter(row => row.event_type === "ems_overdose_911_response")
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      const deaths = state.realEvents
+        .filter(row => row.event_type === "overdose_death")
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+      const labels = [...new Set([...ems, ...deaths].map(row => row.date))].sort();
+      const emsByDate = new Map(ems.map(row => [row.date, Number(row.event_count)]));
+      const deathsByDate = new Map(deaths.map(row => [row.date, Number(row.event_count)]));
+      const emsTrend = regressionValues(ems);
+      const deathTrend = regressionValues(deaths);
+      const emsTrendByDate = new Map(ems.map((row, index) => [row.date, emsTrend[index]]));
+      const deathTrendByDate = new Map(deaths.map((row, index) => [row.date, deathTrend[index]]));
+
+      state.trendChart = new Chart(document.getElementById("real-trend-chart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Weekly EMS calls",
+              data: labels.map(date => emsByDate.get(date) ?? null),
+              borderColor: palette.blue,
+              backgroundColor: palette.blue,
+              borderWidth: 2,
+              pointRadius: 1,
+              tension: 0.12,
+              spanGaps: true,
+              yAxisID: "yEms"
+            },
+            {
+              label: "EMS trend",
+              data: labels.map(date => emsTrendByDate.get(date) ?? null),
+              borderColor: palette.blue,
+              borderDash: [6, 5],
+              borderWidth: 1.7,
+              pointRadius: 0,
+              spanGaps: true,
+              yAxisID: "yEms"
+            },
+            {
+              label: "Monthly deaths",
+              data: labels.map(date => deathsByDate.get(date) ?? null),
+              borderColor: palette.rust,
+              backgroundColor: palette.rust,
+              borderWidth: 2,
+              pointRadius: 2,
+              tension: 0.12,
+              spanGaps: true,
+              yAxisID: "yDeaths"
+            },
+            {
+              label: "Deaths trend",
+              data: labels.map(date => deathTrendByDate.get(date) ?? null),
+              borderColor: palette.rust,
+              borderDash: [6, 5],
+              borderWidth: 1.7,
+              pointRadius: 0,
+              spanGaps: true,
+              yAxisID: "yDeaths"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } },
+            tooltip: {
+              callbacks: {
+                title: items => formatDate(items[0].label)
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                maxTicksLimit: 9,
+                callback(value) {
+                  return formatDate(this.getLabelForValue(value));
+                }
+              }
+            },
+            yEms: {
+              position: "left",
+              beginAtZero: true,
+              title: { display: true, text: "Weekly EMS calls" }
+            },
+            yDeaths: {
+              position: "right",
+              beginAtZero: true,
+              title: { display: true, text: "Monthly deaths" },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderWeatherChart() {
+      const ems = state.realEvents
+        .filter(row => row.event_type === "ems_overdose_911_response")
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+      state.weatherChart = new Chart(document.getElementById("weather-chart"), {
+        type: "line",
+        data: {
+          labels: ems.map(row => row.date),
+          datasets: [
+            {
+              label: "Weekly EMS calls",
+              data: ems.map(row => Number(row.event_count)),
+              borderColor: palette.blue,
+              backgroundColor: palette.blue,
+              borderWidth: 2,
+              pointRadius: 1,
+              tension: 0.15,
+              yAxisID: "yCalls"
+            },
+            {
+              label: "Mean temperature",
+              data: ems.map(row => Number(row.temperature_mean_c)),
+              borderColor: palette.rust,
+              backgroundColor: palette.rust,
+              borderWidth: 1.8,
+              pointRadius: 0,
+              tension: 0.2,
+              yAxisID: "yTemp"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } },
+            tooltip: {
+              callbacks: {
+                title: items => `Week of ${items[0].label}`,
+                label: item => item.dataset.yAxisID === "yTemp"
+                  ? `${item.dataset.label}: ${item.parsed.y.toFixed(1)} °C`
+                  : `${item.dataset.label}: ${item.parsed.y}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                maxTicksLimit: 9,
+                callback(value) {
+                  return formatDate(this.getLabelForValue(value));
+                }
+              }
+            },
+            yCalls: {
+              position: "left",
+              beginAtZero: true,
+              title: { display: true, text: "Weekly EMS calls" }
+            },
+            yTemp: {
+              position: "right",
+              title: { display: true, text: "Mean temperature (°C)" },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
+    function activateTab(tabName, focus = false) {
+      document.querySelectorAll('[role="tab"]').forEach(tab => {
+        const active = tab.dataset.tab === tabName;
+        tab.setAttribute("aria-selected", String(active));
+        tab.tabIndex = active ? 0 : -1;
+        if (active && focus) tab.focus();
+      });
+      document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
+        panel.hidden = panel.id !== `${tabName}-panel`;
+      });
+      if (tabName === "simulated" && state.map) {
+        window.setTimeout(() => state.map.invalidateSize(), 0);
+      }
+      if (tabName === "real" && state.trendChart && state.weatherChart) {
+        window.setTimeout(() => {
+          state.trendChart.resize();
+          state.weatherChart.resize();
+        }, 0);
+      }
+    }
+
+    function initTabs() {
+      const tabs = [...document.querySelectorAll('[role="tab"]')];
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => activateTab(tab.dataset.tab));
+        tab.addEventListener("keydown", event => {
+          if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+          event.preventDefault();
+          const direction = event.key === "ArrowRight" ? 1 : -1;
+          const next = tabs[(index + direction + tabs.length) % tabs.length];
+          activateTab(next.dataset.tab, true);
+        });
+      });
+    }
+
+    async function init() {
+      initTabs();
+      try {
+        const [hotspots, sites, eventStudy, realEvents] = await Promise.all([
+          loadCsv(DATA_PATHS.hotspots),
+          loadCsv(DATA_PATHS.sites),
+          loadCsv(DATA_PATHS.eventStudy),
+          loadCsv(DATA_PATHS.realEvents)
+        ]);
+        Object.assign(state, { hotspots, sites, eventStudy, realEvents });
+        initMap();
+        populateSiteSelect();
+        renderRealTrendChart();
+        renderWeatherChart();
+        setStatus("");
+      } catch (error) {
+        console.error(error);
+        setStatus(
+          "Could not load the repository CSV files. If this page was opened directly, serve the repo root with “python3 -m http.server” and open /frontend/.",
+          true
+        );
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
