@@ -90,11 +90,19 @@ pd.DataFrame(event_study_summary).to_csv(outputs_path(cfg, "event_study_summary.
 
 panel["tract_id"] = panel.tract_id.astype(str)
 panel["week_offset"] = panel.week_offset.astype(str)
-model = smf.ols("n_events ~ treated:post + C(tract_id) + C(week_offset)", data=panel).fit(
+# Site fixed effects account for level differences across the stacked site
+# panels. Controls can still be reused across panels, so this pooled model is
+# suggestive rather than a fully rigorous causal estimate; a cleaner analysis
+# would use non-overlapping control pools or a stacked-event-study estimator
+# designed to handle that overlap.
+model = smf.ols(
+    "n_events ~ treated:post + C(tract_id) + C(week_offset) + C(site_id)",
+    data=panel,
+).fit(
     cov_type="cluster", cov_kwds={"groups": panel["tract_id"]}
 )
 
-log.info("=== Pooled Two-Way Fixed Effects DiD (clustered SE by tract) ===")
+log.info("=== Pooled Fixed Effects DiD (tract, week-offset, and site FE; clustered SE by tract) ===")
 coef = model.params.get("treated:post", np.nan)
 se = model.bse.get("treated:post", np.nan)
 pval = model.pvalues.get("treated:post", np.nan)
@@ -103,3 +111,8 @@ direction = "INCREASE (concentration)" if coef > 0 else "DECREASE (dispersal)"
 sig = "statistically significant" if pval < 0.05 else "NOT statistically significant"
 log.info(f"-> Pooled effect: {direction}, {sig}")
 log.info("NOTE: pooled average can mask a mixed short-term-up/long-term-down pattern -- see per-site breakdown above.")
+log.warning(
+    "Overlapping control-tract reuse across site panels makes this pooled estimate suggestive, "
+    "not a fully rigorous causal estimate. Prefer non-overlapping control pools per site or a "
+    "stacked-event-study design that properly handles overlap."
+)

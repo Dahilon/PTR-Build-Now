@@ -1,5 +1,5 @@
 mu=1.077436
-alpha=15.197024
+alpha=15.197022
 beta=20.085537
 branching_ratio=0.756615
 true_branching_ratio=0.550000

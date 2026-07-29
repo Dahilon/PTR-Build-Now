@@ -82,7 +82,10 @@ def outputs_path(config: dict, filename: str) -> Path:
 
 
 def load_tracts(config: dict) -> pd.DataFrame:
-    return pd.read_csv(data_path(config, "tracts_enriched.csv"))
+    return pd.read_csv(
+        data_path(config, "tracts_enriched.csv"),
+        dtype={"tract_id": str},
+    )
 
 
 def load_sites(config: dict) -> pd.DataFrame:
@@ -90,4 +93,8 @@ def load_sites(config: dict) -> pd.DataFrame:
 
 
 def load_events(config: dict) -> pd.DataFrame:
-    return pd.read_csv(data_path(config, "overdose_events.csv"), parse_dates=["date"])
+    return pd.read_csv(
+        data_path(config, "overdose_events.csv"),
+        parse_dates=["date"],
+        dtype={"tract_id": str},
+    )

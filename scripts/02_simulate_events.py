@@ -33,7 +33,7 @@ sim = cfg["simulation"]
 
 rng = np.random.default_rng(sim["seed_events"])
 
-tracts = pd.read_csv(data_path(cfg, "tracts.csv"))
+tracts = pd.read_csv(data_path(cfg, "tracts.csv"), dtype={"tract_id": str})
 sites = pd.read_csv(data_path(cfg, "harm_reduction_sites.csv"))
 sites["open_date"] = pd.to_datetime(sites["open_date"])
 

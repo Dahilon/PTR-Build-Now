@@ -57,9 +57,12 @@ def neg_log_likelihood(free_params):
     return -(log_lik_sum - compensator)
 
 
-bounds = [(-3, 3), (-8, 8), (-4, 3)]
+bounds = [
+    tuple(hf_cfg["optimizer_bounds"][name])
+    for name in ("log_mu", "logit_n", "log_beta")
+]
 init = [np.log(n_events / T * 0.6), np.log(0.4 / 0.6), np.log(0.5)]
-rng_opt = np.random.default_rng(hf_cfg.get("n_multistart_restarts", 8))
+rng_opt = np.random.default_rng(hf_cfg["optimizer_seed"])
 starts = [init] + [
     [np.log(rng_opt.uniform(0.1, 5)),
      np.log(rng_opt.uniform(0.05, 0.9) / (1 - rng_opt.uniform(0.05, 0.9))),

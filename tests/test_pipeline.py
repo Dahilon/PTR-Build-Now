@@ -24,7 +24,13 @@ import pytest
 from scipy.optimize import minimize
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.utils import dist_km, pairwise_dist_km
+from src.utils import (
+    dist_km,
+    load_config,
+    load_events,
+    load_tracts,
+    pairwise_dist_km,
+)
 
 
 def test_dist_km_zero_for_same_point():
@@ -60,6 +66,16 @@ def test_pairwise_dist_km_symmetric_and_zero_diagonal():
     assert d.shape == (3, 3)
     np.testing.assert_allclose(np.diag(d), 0.0, atol=1e-9)
     np.testing.assert_allclose(d, d.T, atol=1e-9)
+
+
+def test_csv_loaders_preserve_tract_id_leading_zero():
+    """Census tract IDs are identifiers, not integers; CSV loading must not
+    strip the leading zero required for joins with external tract data."""
+    cfg = load_config()
+    for frame in (load_tracts(cfg), load_events(cfg)):
+        assert frame["tract_id"].map(type).eq(str).all()
+        assert frame["tract_id"].str.fullmatch(r"\d{11}").all()
+        assert frame["tract_id"].str.startswith("0").all()
 
 
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):

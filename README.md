@@ -56,6 +56,9 @@ concentration). Swap in real DataSF/CDPH exports — same schema — before
 final submission.
 
 ## Setup
+Python 3.12 or newer is required by the pinned dependencies (notably
+libpysal 4.15).
+
 ```
 pip install -r requirements.txt
 python3 scripts/01_generate_tracts_and_sites.py
@@ -67,5 +70,5 @@ pytest tests/
 ```
 
 ## Status / next steps
-Full pipeline runs clean end-to-end, 7/7 tests passing. Not yet done:
+Full pipeline runs clean end-to-end, 8/8 tests passing. Not yet done:
 frontend/visualization layer, real data ingestion, Foundry build itself.

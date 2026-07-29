@@ -9,7 +9,6 @@ paths:
 simulation:
   seed_tracts_sites: 42
   seed_events: 7
-  seed_optimizer_restarts: 0
   start_date: "2024-01-01"
   end_date: "2025-12-31"
   n_tracts: 48
@@ -66,8 +65,8 @@ event_study:
 
 hawkes_fit:
   n_multistart_restarts: 3
+  optimizer_seed: 0
   optimizer_bounds:
     log_mu: [-3, 5]
     logit_n: [-8, 8]
     log_beta: [-4, 3]
-    log_gamma: [-4, 4]
