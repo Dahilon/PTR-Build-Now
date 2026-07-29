@@ -97,4 +97,32 @@ or harm-reduction activity.
 
 ## Geography decision
 
-Pending Stage 2.
+The four relevant DataSF tables contain **no latitude/longitude, street
+address, named neighborhood, district, ZIP code, or Census tract field**.
+Their actual published resolution is citywide. The only downloaded table
+with incident points and named analysis neighborhoods was the generic fire/
+EMS dispatch table, but it has no overdose/naloxone indicator and therefore
+cannot be used as an overdose geography proxy.
+
+The pipeline's real-data geography contract will nevertheless default to
+`neighborhood`, not `tract`, for two reasons:
+
+1. It avoids inventing Census tract IDs that the source does not publish.
+2. Named DataSF analysis neighborhoods are the preferred next spatial level
+   if a genuinely overdose-specific incident source becomes available.
+
+For the currently relevant aggregates, normalized rows will use the explicit
+placeholder `neighborhood = "Citywide"` and null `lat`/`lon`. This is an
+honest representation of the source, **not neighborhood-level evidence**.
+With only one geography, Moran's I/Getis-Ord statistics are not identifiable;
+the neighborhood spatial path must report that limitation instead of
+producing a number.
+
+If a later overdose-incident source includes latitude/longitude, assigning
+points to neighborhoods—or to Census tracts using Census TIGER/Line
+boundaries—is a separate follow-up. No geocoding or TIGER/Line overlay is
+built in this pass.
+
+The real data also contains no harm-reduction site locations or opening
+dates. The difference-in-differences script therefore remains simulated-only
+until those dates are manually sourced and verified.
