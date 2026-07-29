@@ -163,6 +163,43 @@ def test_real_analysis_modes_reject_unsupported_precision():
         hawkes.load_hawkes_events(cfg)
 
 
+def test_real_time_series_period_alignment_excludes_partial_weeks():
+    analysis = load_script_module("07_real_time_series_analysis.py")
+    events = pd.DataFrame(
+        {
+            "date": pd.to_datetime(
+                ["2024-01-01", "2024-01-07", "2024-01-14"]
+            ),
+            "event_count": [30, 70, 63],
+            "event_type": [analysis.EMS_EVENT_TYPE] * 3,
+        }
+    )
+    weather = pd.DataFrame(
+        {
+            "date": pd.date_range("2024-01-01", "2024-01-31"),
+            "temperature_mean_c": 12.0,
+            "precipitation_mm": 1.0,
+        }
+    )
+    complete, excluded = analysis.prepare_weekly_series(events, weather)
+    assert complete["date"].tolist() == [pd.Timestamp("2024-01-07")]
+    assert complete.iloc[0]["precipitation_mm"] == pytest.approx(7.0)
+    assert set(excluded["period_days"]) == {6, 353}
+
+
+def test_real_time_series_detects_clear_positive_trend():
+    analysis = load_script_module("07_real_time_series_analysis.py")
+    frame = pd.DataFrame(
+        {
+            "elapsed_periods": np.arange(40, dtype=float),
+            "event_count": 10 + 2 * np.arange(40, dtype=float),
+        }
+    )
+    result = analysis.trend_analysis(frame, unit="week", hac_lags=2)
+    assert result["slope"] == pytest.approx(2.0)
+    assert result["pvalue"] < 0.001
+
+
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):
     """Minimal standalone recursive Hawkes simulator for test purposes --
     mirrors the fix applied to scripts/02_simulate_events.py: children are

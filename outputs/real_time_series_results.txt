@@ -1,0 +1,33 @@
+REAL SF AGGREGATE TIME-SERIES ANALYSIS (2024-2025)
+=======================================================
+
+DATA
+- EMS source rows: 106 published weekly aggregates; 102 complete seven-day periods used.
+- Excluded partial EMS periods: 4 (2024-01-01, 2024-12-29, 2025-01-01, 2025-12-28).
+- Death source rows: 24 monthly aggregates used.
+- Weather exposure is period-aligned: mean temperature and total precipitation over each complete week/month.
+
+TREND
+Weekly overdose-related EMS calls: a statistically significant decrease. Slope=-0.134 counts per week (95% CI -0.233 to -0.034), p=0.0085, R²=0.107, n=102.
+Monthly preliminary overdose deaths: a statistically significant decrease. Slope=-0.730 counts per month (95% CI -1.230 to -0.230), p=0.0042, R²=0.197, n=24.
+
+SEASONALITY
+Weekly EMS calls: evidence of month-of-year differences; omnibus F=7.740, p<0.0001, n=102. Highest raw monthly mean=Mar (75.8); lowest=Dec (47.3).
+Monthly deaths: evidence of month-of-year differences; omnibus F=9.759, p=0.0002, n=24. Highest raw monthly mean=Mar (68.0); lowest=Oct (36.0).
+Day-of-week seasonality was not tested. The EMS dates are administrative week-start anchors, not incident weekdays.
+
+WEATHER ASSOCIATION
+Weekly EMS calls temperature correlation: r=-0.244, p=0.0136, n=102 (statistically significant at p<0.05).
+Weekly EMS calls precipitation correlation: r=-0.011, p=0.9137, n=102 (not statistically significant at p<0.05).
+Weekly EMS calls joint weather regression: temperature coefficient=-1.318 (p=0.0276); precipitation coefficient=-0.084 (p=0.3097); R²=0.073, model p=0.0830.
+Monthly deaths temperature correlation: r=-0.612, p=0.0015, n=24 (statistically significant at p<0.05).
+Monthly deaths precipitation correlation: r=+0.382, p=0.0653, n=24 (not statistically significant at p<0.05).
+Monthly deaths joint weather regression: temperature coefficient=-3.305 (p<0.0001); precipitation coefficient=-0.031 (p=0.5168); R²=0.384, model p=0.0005.
+
+INTERPRETATION AND CAVEATS
+- These are associations in citywide aggregate counts, not causal weather effects and not incident-level risk estimates.
+- The public data provides only 106 weekly source rows (102 complete weeks used) and 24 monthly rows. The death analysis in particular has low statistical power.
+- Month-of-year death comparisons have only two observations per month and are exploratory.
+- Temperature, season, and calendar time are related. The weather coefficients can reflect seasonality or other omitted changes; statistical significance does not establish causation.
+- Linear trend and weather-regression standard errors use HAC corrections, but two years is too short to characterize long-run cycles or rule out unmeasured confounding.
+- Public aggregate resolution prevents neighborhood cluster detection, event-level Hawkes fitting, and linkage to site openings; those require internal city incident/site data.
