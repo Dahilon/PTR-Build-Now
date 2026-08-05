@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OperationalBrief",
+  "type": "object",
+  "required": [
+    "brief_id",
+    "signal_id",
+    "headline",
+    "observed_evidence",
+    "operator_next_step",
+    "response_options",
+    "mandatory_caveat",
+    "prohibited_claims"
+  ],
+  "properties": {
+    "brief_id": {"type": "string"},
+    "signal_id": {"type": "string"},
+    "headline": {"type": "string"},
+    "observed_evidence": {
+      "type": "object",
+      "required": ["date", "zone", "observed_count", "historical_expected_count", "risk_score", "confidence_score", "source_file"]
+    },
+    "operator_next_step": {"type": "string"},
+    "response_options": {"type": "array"},
+    "mandatory_caveat": {"type": "string"},
+    "prohibited_claims": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+  },
+  "additionalProperties": false
+}

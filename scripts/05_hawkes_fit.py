@@ -11,6 +11,7 @@ model path.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -148,8 +149,21 @@ def write_not_fitted(cfg: dict, reason: str) -> None:
     log.info("Wrote limitation record to %s", path)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--data-source",
+        choices=["simulated", "real"],
+        help="Override hawkes_fit.data_source for this run.",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = parse_args()
     cfg = load_config()
+    if args.data_source:
+        cfg["hawkes_fit"]["data_source"] = args.data_source
     hawkes_cfg = cfg["hawkes_fit"]
     try:
         events, data_source = load_hawkes_events(cfg)

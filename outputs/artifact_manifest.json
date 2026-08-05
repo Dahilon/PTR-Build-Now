@@ -1,0 +1,24 @@
+{
+  "pipeline_contract_version": "1.0.0",
+  "evidence_window_end": "2025-12-21",
+  "artifacts": [
+    {
+      "path": "outputs/operational_signals.csv",
+      "sha256": "a89856e6bba1654e60b0fcba417e54903d632ad5055074fc617bc3813fdc24c9",
+      "bytes": 55385,
+      "rows": 126
+    },
+    {
+      "path": "outputs/response_scenarios.csv",
+      "sha256": "aac9c653784a197c3d9db3ec7d21aa0874c6f427610a3d81a44ec608760346ba",
+      "bytes": 2501,
+      "rows": 3
+    },
+    {
+      "path": "outputs/operational_briefs.json",
+      "sha256": "cce156f28ddd0755b5a254c251afc151cba2a4f7a4e4743d73c890e0f7e6418b",
+      "bytes": 3556,
+      "rows": 3
+    }
+  ]
+}

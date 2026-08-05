@@ -50,7 +50,9 @@ for _, site in sites.iterrows():
         dep_t = tracts.loc[tt, "deprivation_index"]
         diffs = (tracts.loc[candidate_controls, "deprivation_index"] - dep_t).abs()
         control_tracts.add(diffs.idxmin())
-    control_tracts = list(control_tracts)
+    # A set removes duplicate matches; sorting makes the persisted panel and
+    # downstream dashboard deterministic across Python processes.
+    control_tracts = sorted(control_tracts)
 
     panel_tracts = treated_tracts + control_tracts
     ev = events[events.tract_id.isin(panel_tracts)].copy()

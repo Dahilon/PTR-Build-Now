@@ -1,0 +1,5 @@
+resource_id,resource_type,available_units,unit_cost_usd,coverage_per_unit,evidence_class
+RES-OUTREACH,mobile_outreach_team_shift,4,12500,35,notional_demo
+RES-NALOXONE,naloxone_distribution_batch,8,3000,20,notional_demo
+RES-NAVIGATION,care_navigation_team_shift,4,8500,25,notional_demo
+RES-ANALYST,public_health_analyst_shift,6,1800,15,notional_demo

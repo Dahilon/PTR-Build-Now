@@ -1,0 +1,87 @@
+[
+  {
+    "brief_id": "BRIEF-OPS-EMS-OVERDOSE-911-RESPONSE-20251116",
+    "signal_id": "OPS-EMS-OVERDOSE-911-RESPONSE-20251116",
+    "headline": "High ems overdose 911 response signal with low confidence",
+    "observed_evidence": {
+      "date": "2025-11-16",
+      "zone": "Citywide",
+      "observed_count": 70,
+      "historical_expected_count": 58.5,
+      "risk_score": 69.39,
+      "confidence_score": 0.45,
+      "source_file": "datasf_ed3a-sn39_overdose-related-911-responses-by-emergency-medical-services.csv"
+    },
+    "operator_next_step": "Validate with internal incident data before geographic deployment",
+    "response_options": [
+      {
+        "scenario_id": "SCN-20251116-1",
+        "scenario_title": "Rapid stabilization",
+        "total_cost_usd": 29300.0,
+        "status": "proposed"
+      },
+      {
+        "scenario_id": "SCN-20251116-2",
+        "scenario_title": "Balanced response",
+        "total_cost_usd": 29400.0,
+        "status": "proposed"
+      },
+      {
+        "scenario_id": "SCN-20251116-3",
+        "scenario_title": "Validate before deployment",
+        "total_cost_usd": 28800.0,
+        "status": "proposed"
+      }
+    ],
+    "mandatory_caveat": "Citywide aggregate; no incident coordinates or exact timestamps. Do not infer neighborhood-level risk or causality.",
+    "prohibited_claims": [
+      "Do not name a high-risk neighborhood from citywide data.",
+      "Do not claim temperature causes overdose events.",
+      "Do not treat notional resource estimates as observed outcomes."
+    ]
+  },
+  {
+    "brief_id": "BRIEF-OPS-OVERDOSE-DEATH-20251201",
+    "signal_id": "OPS-OVERDOSE-DEATH-20251201",
+    "headline": "Routine overdose death signal with low confidence",
+    "observed_evidence": {
+      "date": "2025-12-01",
+      "zone": "Citywide",
+      "observed_count": 40,
+      "historical_expected_count": 46.5,
+      "risk_score": 36.85,
+      "confidence_score": 0.45,
+      "source_file": "datasf_jxrr-bmra_preliminary-unintentional-drug-overdose-deaths.csv"
+    },
+    "operator_next_step": "Validate with internal incident data before geographic deployment",
+    "response_options": [],
+    "mandatory_caveat": "Citywide aggregate; no incident coordinates or exact timestamps. Do not infer neighborhood-level risk or causality.",
+    "prohibited_claims": [
+      "Do not name a high-risk neighborhood from citywide data.",
+      "Do not claim temperature causes overdose events.",
+      "Do not treat notional resource estimates as observed outcomes."
+    ]
+  },
+  {
+    "brief_id": "BRIEF-OPS-EMS-OVERDOSE-911-RESPONSE-20251221",
+    "signal_id": "OPS-EMS-OVERDOSE-911-RESPONSE-20251221",
+    "headline": "Routine ems overdose 911 response signal with low confidence",
+    "observed_evidence": {
+      "date": "2025-12-21",
+      "zone": "Citywide",
+      "observed_count": 38,
+      "historical_expected_count": 61.5,
+      "risk_score": 18.81,
+      "confidence_score": 0.45,
+      "source_file": "datasf_ed3a-sn39_overdose-related-911-responses-by-emergency-medical-services.csv"
+    },
+    "operator_next_step": "Validate with internal incident data before geographic deployment",
+    "response_options": [],
+    "mandatory_caveat": "Citywide aggregate; no incident coordinates or exact timestamps. Do not infer neighborhood-level risk or causality.",
+    "prohibited_claims": [
+      "Do not name a high-risk neighborhood from citywide data.",
+      "Do not claim temperature causes overdose events.",
+      "Do not treat notional resource estimates as observed outcomes."
+    ]
+  }
+]

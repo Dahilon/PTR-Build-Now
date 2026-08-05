@@ -15,6 +15,8 @@ Tests targeting the actual bugs found while building this pipeline:
      function is correct, independent of any real-data identifiability
      difficulty).
 """
+import hashlib
+import json
 import sys
 from collections import deque
 from importlib.util import module_from_spec, spec_from_file_location
@@ -32,6 +34,11 @@ from src.utils import (
     load_events,
     load_tracts,
     pairwise_dist_km,
+)
+from src.decision_support import (
+    build_grounded_briefs,
+    build_operational_signals,
+    build_response_scenarios,
 )
 
 
@@ -230,6 +237,117 @@ def test_frontend_uses_period_aligned_analysis_outputs():
     assert "102 complete weeks analyzed (106 published rows)" in frontend
     assert "configureDependencies()" in frontend
     assert "validateLoadedData(loaded)" in frontend
+
+
+def _decision_events() -> pd.DataFrame:
+    dates = pd.date_range("2024-01-07", periods=16, freq="7D")
+    return pd.DataFrame(
+        {
+            "date": dates,
+            "event_count": [50] * 15 + [80],
+            "event_type": ["ems_overdose_911_response"] * 16,
+            "source_granularity": ["weekly"] * 16,
+            "source_file": ["public.csv"] * 16,
+            "neighborhood": ["Citywide"] * 16,
+        }
+    )
+
+
+def test_operational_signal_separates_severity_from_confidence():
+    signals = build_operational_signals(_decision_events(), {"weekly": 12})
+    latest = signals.iloc[-1]
+    assert latest["severity"] in {"high", "critical"}
+    assert latest["confidence_label"] == "low"
+    assert latest["confidence_score"] <= 0.45
+    assert latest["zone_id"] == "Citywide"
+    assert latest["decision_scope"] == "citywide_readiness_only"
+    assert "internal incident data" in latest["recommended_action"]
+
+
+def test_response_scenarios_respect_budget_inventory_and_human_approval():
+    signals = build_operational_signals(_decision_events(), {"weekly": 12})
+    resources = pd.DataFrame(
+        {
+            "resource_id": ["A", "B"],
+            "resource_type": [
+                "mobile_outreach_team_shift",
+                "public_health_analyst_shift",
+            ],
+            "available_units": [2, 3],
+            "unit_cost_usd": [100, 40],
+            "coverage_per_unit": [20, 5],
+            "evidence_class": ["notional_demo", "notional_demo"],
+        }
+    )
+    scenarios = build_response_scenarios(signals, resources, budget=180)
+    assert len(scenarios) == 3
+    assert scenarios["total_cost_usd"].le(180).all()
+    assert scenarios["approval_required"].all()
+    assert scenarios["status"].eq("proposed").all()
+    for plan_text in scenarios["resource_plan_json"]:
+        plan = json.loads(plan_text)
+        assert all(
+            item["quantity"]
+            <= {"A": 2, "B": 3}[item["resource_id"]]
+            for item in plan
+        )
+
+
+def test_grounded_brief_carries_source_and_prohibits_geographic_invention():
+    signals = build_operational_signals(_decision_events(), {"weekly": 12})
+    resources = pd.DataFrame(
+        {
+            "resource_id": ["A"],
+            "resource_type": ["public_health_analyst_shift"],
+            "available_units": [2],
+            "unit_cost_usd": [50],
+            "coverage_per_unit": [5],
+            "evidence_class": ["notional_demo"],
+        }
+    )
+    scenarios = build_response_scenarios(signals, resources, budget=100)
+    brief = build_grounded_briefs(signals, scenarios)[0]
+    assert brief["observed_evidence"]["source_file"] == "public.csv"
+    assert any("neighborhood" in claim for claim in brief["prohibited_claims"])
+    assert "no incident coordinates" in brief["mandatory_caveat"]
+
+
+def test_checked_in_operational_outputs_exclude_partial_ems_periods():
+    root = Path(__file__).resolve().parent.parent
+    signals = pd.read_csv(root / "outputs" / "operational_signals.csv")
+    ems_dates = set(
+        signals.loc[
+            signals["event_type"] == "ems_overdose_911_response",
+            "signal_date",
+        ]
+    )
+    assert len(signals) == 126
+    assert not {
+        "2024-01-01",
+        "2024-12-29",
+        "2025-01-01",
+        "2025-12-28",
+    }.intersection(ems_dates)
+
+
+def test_checked_in_scenarios_are_distinct_and_feasible():
+    root = Path(__file__).resolve().parent.parent
+    scenarios = pd.read_csv(root / "outputs" / "response_scenarios.csv")
+    assert scenarios["resource_plan_json"].nunique() == 3
+    assert scenarios["total_cost_usd"].le(scenarios["budget_limit_usd"]).all()
+    assert scenarios["status"].eq("proposed").all()
+    assert scenarios["evidence_class"].eq("notional_demo_resources").all()
+
+
+def test_artifact_manifest_hashes_match_checked_in_outputs():
+    root = Path(__file__).resolve().parent.parent
+    manifest = json.loads(
+        (root / "outputs" / "artifact_manifest.json").read_text()
+    )
+    for artifact in manifest["artifacts"]:
+        path = root / artifact["path"]
+        assert path.exists()
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == artifact["sha256"]
 
 
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):

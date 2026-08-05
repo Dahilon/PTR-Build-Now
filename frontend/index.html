@@ -370,6 +370,111 @@
       font-size: 0.82rem;
     }
 
+    .operations-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      gap: 16px;
+    }
+
+    .operations-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .signal-list,
+    .scenario-list {
+      display: grid;
+      gap: 10px;
+      padding: 18px;
+    }
+
+    .signal-row,
+    .scenario-row {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--surface);
+    }
+
+    .signal-row-top,
+    .scenario-row-top,
+    .workflow-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .signal-row h4,
+    .scenario-row h4 {
+      margin: 0;
+      font-size: 0.86rem;
+    }
+
+    .signal-row p,
+    .scenario-row p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: var(--green);
+      background: var(--green-soft);
+      font-size: 0.69rem;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .pill.low {
+      color: #76502d;
+      background: #f2dfc7;
+    }
+
+    .scenario-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .scenario-row input {
+      margin-top: 4px;
+      accent-color: var(--green);
+    }
+
+    .scenario-row:has(input:checked) {
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px var(--green-soft);
+    }
+
+    .workflow-actions {
+      padding: 0 18px 18px;
+    }
+
+    .primary-action {
+      padding: 9px 13px;
+      border: 1px solid var(--green);
+      border-radius: 7px;
+      color: white;
+      background: var(--green);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary-action:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .audit-note {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
     .status {
       display: none;
       margin-bottom: 16px;
@@ -405,7 +510,8 @@
 
     @media (max-width: 900px) {
       .dashboard-grid,
-      .real-grid {
+      .real-grid,
+      .operations-grid {
         grid-template-columns: 1fr;
       }
 
@@ -413,7 +519,8 @@
       .side,
       .second-row,
       .real-grid .stats-card,
-      .real-grid .callout {
+      .real-grid .callout,
+      .operations-grid .full {
         grid-column: 1;
         grid-row: auto;
       }
@@ -475,7 +582,7 @@
         <p class="eyebrow">San Francisco · Public health decision support</p>
         <h1>Overdose analysis dashboard</h1>
         <p class="subtitle">
-          A clear separation between the validated simulated-methodology demo and the findings supported by public SF data.
+          Trace real evidence into an auditable signal, compare constrained response options, and keep deployment under human control.
         </p>
       </div>
       <span class="context-badge">2024–2025 analysis window</span>
@@ -500,6 +607,15 @@
         data-tab="real"
         type="button"
       >Real SF Data</button>
+      <button
+        class="tab"
+        id="operations-tab"
+        role="tab"
+        aria-selected="false"
+        aria-controls="operations-panel"
+        data-tab="operations"
+        type="button"
+      >Response Operations</button>
     </nav>
 
     <div id="load-status" class="status visible" role="status">Loading repository data…</div>
@@ -641,6 +757,57 @@
         </aside>
       </div>
     </section>
+
+    <section
+      class="tabpanel"
+      id="operations-panel"
+      role="tabpanel"
+      aria-labelledby="operations-tab"
+      data-testid="operations-panel"
+      hidden
+    >
+      <div class="panel-intro">
+        <div>
+          <h2>From evidence to an accountable decision</h2>
+          <p>Review signal severity and confidence separately, compare feasible resource plans, then route one option for human approval.</p>
+        </div>
+        <span class="data-note">No automatic deployment</span>
+      </div>
+
+      <div class="operations-grid">
+        <article class="card">
+          <header class="card-header">
+            <div>
+              <h3>Latest operational signals</h3>
+              <p>Deterministic scores from real public aggregates</p>
+            </div>
+          </header>
+          <div id="signal-list" class="signal-list"></div>
+        </article>
+
+        <article class="card">
+          <header class="card-header">
+            <div>
+              <h3>Constrained response options</h3>
+              <p>Every plan respects the $30,000 demo budget and notional inventory</p>
+            </div>
+          </header>
+          <div id="scenario-list" class="scenario-list"></div>
+          <div class="workflow-actions">
+            <span id="audit-note" class="audit-note">Select an option to compare. Foundry records the real approval lifecycle.</span>
+            <button id="route-approval" class="primary-action" type="button" disabled>Route for approval</button>
+          </div>
+        </article>
+
+        <aside class="card callout full">
+          <span class="callout-mark" aria-hidden="true">!</span>
+          <div>
+            <h3>Guardrail: low confidence is not low importance</h3>
+            <p>These signals are real, but citywide and aggregate. They can trigger readiness and data validation—not neighborhood targeting. Resource costs and reach are explicitly notional until replaced by governed internal Foundry data.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
   </main>
 
   <script
@@ -656,7 +823,9 @@
       sites: "../data/harm_reduction_sites.csv",
       eventStudy: "../outputs/event_study_panel.csv",
       realWeekly: "../outputs/real_time_series_weekly.csv",
-      realMonthly: "../outputs/real_time_series_monthly.csv"
+      realMonthly: "../outputs/real_time_series_monthly.csv",
+      operationalSignals: "../outputs/operational_signals.csv",
+      responseScenarios: "../outputs/response_scenarios.csv"
     };
 
     const palette = {
@@ -677,6 +846,8 @@
       eventStudy: [],
       realWeekly: [],
       realMonthly: [],
+      operationalSignals: [],
+      responseScenarios: [],
       map: null,
       eventChart: null,
       trendChart: null,
@@ -727,6 +898,8 @@
       requireColumns(data.eventStudy, ["site_id", "week_offset", "treated", "n_events"], "event-study panel");
       requireColumns(data.realWeekly, ["date", "event_count", "temperature_mean_c"], "weekly real series");
       requireColumns(data.realMonthly, ["date", "event_count", "temperature_mean_c"], "monthly real series");
+      requireColumns(data.operationalSignals, ["signal_id", "signal_date", "risk_score", "severity", "confidence_label", "decision_scope"], "operational signals");
+      requireColumns(data.responseScenarios, ["scenario_id", "scenario_title", "total_cost_usd", "resource_plan_json", "approval_required"], "response scenarios");
     }
 
     async function loadCsv(path) {
@@ -1156,6 +1329,62 @@
       });
     }
 
+    function humanize(value) {
+      return String(value || "").replaceAll("_", " ").replace(/\b\w/g, character => character.toUpperCase());
+    }
+
+    function renderOperations() {
+      const latestByType = new Map();
+      state.operationalSignals.forEach(signal => {
+        const current = latestByType.get(signal.event_type);
+        if (!current || String(signal.signal_date) > String(current.signal_date)) latestByType.set(signal.event_type, signal);
+      });
+      const targetId = state.responseScenarios[0]?.target_signal_id;
+      const targetSignal = state.operationalSignals.find(signal => signal.signal_id === targetId);
+      const displaySignals = [...latestByType.values()];
+      if (targetSignal && !displaySignals.some(signal => signal.signal_id === targetId)) displaySignals.push(targetSignal);
+      document.getElementById("signal-list").innerHTML = displaySignals
+        .sort((a, b) => (a.signal_id === targetId ? -1 : b.signal_id === targetId ? 1 : String(b.signal_date).localeCompare(String(a.signal_date))))
+        .map(signal => `
+          <div class="signal-row">
+            <div class="signal-row-top">
+              <h4>${signal.signal_id === targetId ? "Scenario target · " : "Latest · "}${escapeHtml(humanize(signal.event_type))}</h4>
+              <span class="pill">${escapeHtml(signal.severity)} · ${Number(signal.risk_score).toFixed(0)}/100</span>
+            </div>
+            <p>${escapeHtml(signal.signal_date)} · ${Number(signal.observed_count).toLocaleString()} observed vs ${Number(signal.expected_count).toFixed(1)} expected</p>
+            <p><span class="pill low">${escapeHtml(signal.confidence_label)} confidence</span> ${escapeHtml(humanize(signal.decision_scope))}</p>
+          </div>
+        `).join("");
+
+      document.getElementById("scenario-list").innerHTML = state.responseScenarios.map((scenario, index) => {
+        const resources = JSON.parse(scenario.resource_plan_json);
+        const plan = resources.map(item => `${item.quantity}× ${humanize(item.resource_type)}`).join(" · ");
+        return `
+          <label class="scenario-row">
+            <input type="radio" name="scenario" value="${escapeHtml(scenario.scenario_id)}" ${index === 0 ? "checked" : ""}>
+            <span>
+              <span class="scenario-row-top">
+                <h4>${escapeHtml(scenario.scenario_title)}</h4>
+                <span class="pill">$${Number(scenario.total_cost_usd).toLocaleString()}</span>
+              </span>
+              <p>${escapeHtml(plan)}</p>
+              <p>Estimated reach: ${Number(scenario.estimated_people_reached).toLocaleString()} · Human approval required</p>
+            </span>
+          </label>
+        `;
+      }).join("");
+
+      const button = document.getElementById("route-approval");
+      button.disabled = state.responseScenarios.length === 0;
+      button.addEventListener("click", () => {
+        const selected = document.querySelector('input[name="scenario"]:checked');
+        if (!selected) return;
+        button.disabled = true;
+        button.textContent = "Routed for review";
+        document.getElementById("audit-note").textContent = `${selected.value} is pending operator approval in this local demo; no resource was deployed.`;
+      }, { once: true });
+    }
+
     function activateTab(tabName, focus = false) {
       document.querySelectorAll('[role="tab"]').forEach(tab => {
         const active = tab.dataset.tab === tabName;
@@ -1195,14 +1424,16 @@
       initTabs();
       if (!configureDependencies()) return;
       try {
-        const [hotspots, sites, eventStudy, realWeekly, realMonthly] = await Promise.all([
+        const [hotspots, sites, eventStudy, realWeekly, realMonthly, operationalSignals, responseScenarios] = await Promise.all([
           loadCsv(DATA_PATHS.hotspots),
           loadCsv(DATA_PATHS.sites),
           loadCsv(DATA_PATHS.eventStudy),
           loadCsv(DATA_PATHS.realWeekly),
-          loadCsv(DATA_PATHS.realMonthly)
+          loadCsv(DATA_PATHS.realMonthly),
+          loadCsv(DATA_PATHS.operationalSignals),
+          loadCsv(DATA_PATHS.responseScenarios)
         ]);
-        const loaded = { hotspots, sites, eventStudy, realWeekly, realMonthly };
+        const loaded = { hotspots, sites, eventStudy, realWeekly, realMonthly, operationalSignals, responseScenarios };
         validateLoadedData(loaded);
         Object.assign(state, loaded);
         document.getElementById("tract-count").textContent = hotspots.length.toLocaleString();
@@ -1211,6 +1442,7 @@
         populateSiteSelect();
         renderRealTrendChart();
         renderWeatherChart();
+        renderOperations();
         setStatus("");
       } catch (error) {
         console.error(error);

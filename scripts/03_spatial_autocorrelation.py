@@ -8,6 +8,7 @@ multiple located neighborhoods, rather than inventing spatial precision.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -42,6 +43,7 @@ def calculate_spatial_statistics(
     config: dict,
 ) -> tuple[pd.DataFrame, Moran]:
     """Calculate Moran's I and local Gi statistics for located geographies."""
+    np.random.seed(config["permutation_seed"])
     gdf = gpd.GeoDataFrame(
         frame.set_index(id_column),
         geometry=[
@@ -65,6 +67,8 @@ def calculate_spatial_statistics(
         transform="r",
         permutations=config["gi_permutations"],
         alternative=config["gi_alternative"],
+        seed=config["permutation_seed"],
+        n_jobs=1,
     )
     gdf["gi_zscore"] = gi.Zs
     gdf["gi_pvalue"] = gi.p_sim
@@ -223,9 +227,23 @@ def run_neighborhood_analysis(cfg: dict) -> None:
     )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--geography-level",
+        choices=["tract", "neighborhood"],
+        help="Override spatial_analysis.geography_level for this run.",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = parse_args()
     cfg = load_config()
-    geography_level = cfg["spatial_analysis"]["geography_level"]
+    geography_level = (
+        args.geography_level
+        or cfg["spatial_analysis"]["geography_level"]
+    )
     if geography_level == "tract":
         run_tract_analysis(cfg)
     elif geography_level == "neighborhood":

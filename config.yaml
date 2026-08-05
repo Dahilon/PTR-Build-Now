@@ -63,6 +63,7 @@ harm_reduction_sites:
 spatial_analysis:
   geography_level: "neighborhood"  # tract (simulated) or neighborhood (real)
   real_event_type: "ems_overdose_911_response"
+  permutation_seed: 42
   knn_k: 5
   moran_permutations: 999
   gi_permutations: 999
@@ -84,3 +85,16 @@ hawkes_fit:
     log_mu: [-3, 5]
     logit_n: [-8, 8]
     log_beta: [-4, 3]
+
+# Decision-support outputs are deterministic and intentionally separate
+# severity (how unusual the count is) from confidence (how precise the data is).
+decision_support:
+  baseline_periods:
+    weekly: 12
+    monthly: 6
+  response_budget: 30000
+  operational_signals_file: "operational_signals.csv"
+  response_scenarios_file: "response_scenarios.csv"
+  operational_briefs_file: "operational_briefs.json"
+  artifact_manifest_file: "artifact_manifest.json"
+  resource_inventory_file: "data/notional_response_resources.csv"
