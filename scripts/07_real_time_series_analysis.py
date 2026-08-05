@@ -376,6 +376,32 @@ def build_report(
     return "\n".join(lines) + "\n"
 
 
+def write_analysis_series(
+    cfg: dict,
+    weekly: pd.DataFrame,
+    monthly: pd.DataFrame,
+) -> tuple[Path, Path]:
+    """Persist the exact period-aligned samples used by the analysis.
+
+    These small outputs keep downstream visualizations from accidentally
+    plotting partial weeks or period-start weather values while labeling
+    them with statistics calculated from complete-period exposures.
+    """
+    columns = [
+        "date",
+        "event_count",
+        "temperature_mean_c",
+        "precipitation_mm",
+        "elapsed_periods",
+        "month",
+    ]
+    weekly_output = outputs_path(cfg, "real_time_series_weekly.csv")
+    monthly_output = outputs_path(cfg, "real_time_series_monthly.csv")
+    weekly[columns].to_csv(weekly_output, index=False)
+    monthly[columns].to_csv(monthly_output, index=False)
+    return weekly_output, monthly_output
+
+
 def main() -> int:
     cfg = load_config()
     events, weather = load_inputs(cfg)
@@ -389,8 +415,16 @@ def main() -> int:
     report = build_report(weekly, excluded_weekly, monthly)
     output = outputs_path(cfg, "real_time_series_results.txt")
     output.write_text(report, encoding="utf-8")
+    weekly_output, monthly_output = write_analysis_series(
+        cfg, weekly, monthly
+    )
     print(report, end="")
     log.info("Saved real time-series findings to %s", output)
+    log.info(
+        "Saved analysis-ready series to %s and %s",
+        weekly_output,
+        monthly_output,
+    )
     return 0
 
 

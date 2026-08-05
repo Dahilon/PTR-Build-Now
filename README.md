@@ -124,6 +124,7 @@ python3 scripts/03_spatial_autocorrelation.py
 python3 scripts/04_event_study_diff_in_diff.py
 python3 scripts/05_hawkes_fit.py
 pytest tests/
+python3 -m http.server 8000  # dashboard: http://localhost:8000/frontend/
 ```
 
 The optional real-data fetch is a one-time bulk pull: it searches DataSF
@@ -147,6 +148,7 @@ Analysis mode is config-driven:
   and treatment geography are manually sourced.
 
 ## Status / next steps
-Full pipeline runs clean end-to-end, 14/14 tests passing. Not yet done:
-frontend/visualization layer, exact incident/site source acquisition,
-Foundry build itself.
+Full pipeline and the static two-tab visualization layer are implemented.
+The remaining work is exact incident/site source acquisition and the Foundry
+build itself. The frontend reads generated CSV artifacts directly and can be
+served from the repository root with Python's built-in HTTP server.

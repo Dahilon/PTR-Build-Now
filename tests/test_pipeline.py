@@ -200,6 +200,38 @@ def test_real_time_series_detects_clear_positive_trend():
     assert result["pvalue"] < 0.001
 
 
+def test_real_time_series_writes_frontend_analysis_samples(tmp_path):
+    analysis = load_script_module("07_real_time_series_analysis.py")
+    cfg = {"paths": {"outputs_dir": str(tmp_path)}}
+    weekly = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-07"]),
+            "event_count": [70],
+            "temperature_mean_c": [12.5],
+            "precipitation_mm": [3.0],
+            "elapsed_periods": [0.0],
+            "month": [1],
+        }
+    )
+    monthly = weekly.assign(date=pd.to_datetime(["2024-01-01"]))
+    weekly_path, monthly_path = analysis.write_analysis_series(
+        cfg, weekly, monthly
+    )
+    assert pd.read_csv(weekly_path)["event_count"].tolist() == [70]
+    assert pd.read_csv(monthly_path)["temperature_mean_c"].tolist() == [12.5]
+
+
+def test_frontend_uses_period_aligned_analysis_outputs():
+    frontend = (
+        Path(__file__).resolve().parent.parent / "frontend" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert "../outputs/real_time_series_weekly.csv" in frontend
+    assert "../outputs/real_time_series_monthly.csv" in frontend
+    assert "102 complete weeks analyzed (106 published rows)" in frontend
+    assert "configureDependencies()" in frontend
+    assert "validateLoadedData(loaded)" in frontend
+
+
 def _simulate_recursive_hawkes(rng, n_background, true_n, true_beta, Tmax):
     """Minimal standalone recursive Hawkes simulator for test purposes --
     mirrors the fix applied to scripts/02_simulate_events.py: children are

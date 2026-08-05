@@ -4,12 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>San Francisco Overdose Analysis</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIINfQ3ynhW6gMZjdO67eAhtyGVh2p65t0M="
-    crossorigin=""
-  >
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <style>
     :root {
       --bg: #f3f5f2;
@@ -549,9 +544,9 @@
             <span class="metric-detail">Permutation p = 0.001 · strong spatial autocorrelation.</span>
           </div>
           <div class="metric">
-            <span class="metric-value">48</span>
+            <span class="metric-value" id="tract-count">—</span>
             <span class="metric-label">Simulated tracts</span>
-            <span class="metric-detail">Four harm-reduction sites are overlaid on the map.</span>
+            <span class="metric-detail" id="site-count-note">Harm-reduction sites are overlaid on the map.</span>
           </div>
         </aside>
 
@@ -606,7 +601,7 @@
           <header class="card-header">
             <div>
               <h3>Weekly EMS calls and temperature</h3>
-              <p>Joined mean temperature shown on a separate axis</p>
+              <p>Complete-week, period-aligned mean temperature shown on a separate axis</p>
             </div>
           </header>
           <div class="chart-wrap tall">
@@ -620,7 +615,7 @@
           <div class="metric">
             <span class="metric-value metric-down">↓ Significant</span>
             <span class="metric-label">Weekly EMS calls declined</span>
-            <span class="metric-detail">Linear trend p = 0.0085 · 106 weekly observations.</span>
+            <span class="metric-detail">Linear trend p = 0.0085 · 102 complete weeks analyzed (106 published rows).</span>
           </div>
           <div class="metric">
             <span class="metric-value metric-down">↓ Significant</span>
@@ -660,7 +655,8 @@
       hotspots: "../outputs/tract_hotspot_results.csv",
       sites: "../data/harm_reduction_sites.csv",
       eventStudy: "../outputs/event_study_panel.csv",
-      realEvents: "../data/real_events_normalized.csv"
+      realWeekly: "../outputs/real_time_series_weekly.csv",
+      realMonthly: "../outputs/real_time_series_monthly.csv"
     };
 
     const palette = {
@@ -679,22 +675,58 @@
       hotspots: [],
       sites: [],
       eventStudy: [],
-      realEvents: [],
+      realWeekly: [],
+      realMonthly: [],
       map: null,
       eventChart: null,
       trendChart: null,
       weatherChart: null
     };
 
-    Chart.defaults.color = palette.muted;
-    Chart.defaults.borderColor = palette.grid;
-    Chart.defaults.font.family = 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-
     function setStatus(message, isError = false) {
       const status = document.getElementById("load-status");
       status.textContent = message;
       status.classList.toggle("error", isError);
       status.classList.toggle("visible", Boolean(message));
+    }
+
+    function configureDependencies() {
+      const required = {
+        Chart: window.Chart,
+        Leaflet: window.L,
+        PapaParse: window.Papa
+      };
+      const missing = Object.entries(required)
+        .filter(([, dependency]) => !dependency)
+        .map(([name]) => name);
+      if (missing.length) {
+        setStatus(
+          `Could not load ${missing.join(", ")} from the CDN. Check the network connection and reload the page.`,
+          true
+        );
+        return false;
+      }
+      Chart.defaults.color = palette.muted;
+      Chart.defaults.borderColor = palette.grid;
+      Chart.defaults.font.family = 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      return true;
+    }
+
+    function requireColumns(rows, columns, sourceName) {
+      if (!rows.length) throw new Error(`${sourceName} contains no rows`);
+      const available = new Set(Object.keys(rows[0]));
+      const missing = columns.filter(column => !available.has(column));
+      if (missing.length) {
+        throw new Error(`${sourceName} is missing columns: ${missing.join(", ")}`);
+      }
+    }
+
+    function validateLoadedData(data) {
+      requireColumns(data.hotspots, ["tract_id", "lat", "lon", "hotspot_type"], "hotspot results");
+      requireColumns(data.sites, ["site_id", "name", "lat", "lon", "open_date"], "site data");
+      requireColumns(data.eventStudy, ["site_id", "week_offset", "treated", "n_events"], "event-study panel");
+      requireColumns(data.realWeekly, ["date", "event_count", "temperature_mean_c"], "weekly real series");
+      requireColumns(data.realMonthly, ["date", "event_count", "temperature_mean_c"], "monthly real series");
     }
 
     async function loadCsv(path) {
@@ -950,11 +982,11 @@
     }
 
     function renderRealTrendChart() {
-      const ems = state.realEvents
-        .filter(row => row.event_type === "ems_overdose_911_response")
+      const ems = state.realWeekly
+        .slice()
         .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-      const deaths = state.realEvents
-        .filter(row => row.event_type === "overdose_death")
+      const deaths = state.realMonthly
+        .slice()
         .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
       const labels = [...new Set([...ems, ...deaths].map(row => row.date))].sort();
@@ -1053,8 +1085,8 @@
     }
 
     function renderWeatherChart() {
-      const ems = state.realEvents
-        .filter(row => row.event_type === "ems_overdose_911_response")
+      const ems = state.realWeekly
+        .slice()
         .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
       state.weatherChart = new Chart(document.getElementById("weather-chart"), {
@@ -1161,14 +1193,20 @@
 
     async function init() {
       initTabs();
+      if (!configureDependencies()) return;
       try {
-        const [hotspots, sites, eventStudy, realEvents] = await Promise.all([
+        const [hotspots, sites, eventStudy, realWeekly, realMonthly] = await Promise.all([
           loadCsv(DATA_PATHS.hotspots),
           loadCsv(DATA_PATHS.sites),
           loadCsv(DATA_PATHS.eventStudy),
-          loadCsv(DATA_PATHS.realEvents)
+          loadCsv(DATA_PATHS.realWeekly),
+          loadCsv(DATA_PATHS.realMonthly)
         ]);
-        Object.assign(state, { hotspots, sites, eventStudy, realEvents });
+        const loaded = { hotspots, sites, eventStudy, realWeekly, realMonthly };
+        validateLoadedData(loaded);
+        Object.assign(state, loaded);
+        document.getElementById("tract-count").textContent = hotspots.length.toLocaleString();
+        document.getElementById("site-count-note").textContent = `${sites.length} harm-reduction sites are overlaid on the map.`;
         initMap();
         populateSiteSelect();
         renderRealTrendChart();
@@ -1177,7 +1215,7 @@
       } catch (error) {
         console.error(error);
         setStatus(
-          "Could not load the repository CSV files. If this page was opened directly, serve the repo root with “python3 -m http.server” and open /frontend/.",
+          `Could not initialize the dashboard: ${error.message}. If this page was opened directly, serve the repo root with “python3 -m http.server” and open /frontend/.`,
           true
         );
       }
