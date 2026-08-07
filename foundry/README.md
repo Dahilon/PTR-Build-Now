@@ -10,6 +10,12 @@
   (`ri.foundry.main.dataset.24022566-607d-4301-a69b-9b9ec8328fea`)
 - Dataset: `real_time_series_monthly`
   (`ri.foundry.main.dataset.a495726d-f0c3-4230-aed7-d3ec0dfdc896`)
+- Dataset: `operational_signals`
+  (`ri.foundry.main.dataset.9ec12344-c777-4a4e-8b59-e56188b540c8`)
+- Dataset: `response_scenarios`
+  (`ri.foundry.main.dataset.27df0da3-7f60-4a37-ae1c-9e3a441588a7`)
+- Dataset: `notional_response_resources`
+  (`ri.foundry.main.dataset.1caed863-fab3-40df-8c1a-3e31818c885f`)
 
 ## Existing ontology
 
@@ -24,22 +30,26 @@
 The normalized public aggregate is already mapped to Overdose Signal. Because
 the source has no sub-city geography, its `Zone ID` is honestly `Citywide`.
 
-## Submission-ready additions
+## Operational ontology additions (live)
 
-Upload and map these generated artifacts:
+The following generated artifacts were uploaded and mapped on 2026-08-07:
 
-1. `outputs/operational_signals.csv` → **Overdose Signal**
-   - Add properties: Observed Count, Expected Count, Excess Count, Severity,
+1. `outputs/operational_signals.csv` → **Operational Signal**
+   - 18 properties: Observed Count, Expected Count, Excess Count, Severity,
      Confidence Score, Confidence Label, Evidence Class, Decision Scope,
      Recommended Action, Source File, Data Limitations.
 2. `outputs/response_scenarios.csv` → new **Response Scenario** object type.
    - Primary key: Scenario ID; title: Scenario Title.
-   - Link to Overdose Signal with Target Signal ID and to Zone with Target Zone
-     ID.
+   - Includes 15 properties for budget, cost, reach, utility, approval state,
+     evidence, rationale, and limitations.
 3. `data/notional_response_resources.csv` → new **Response Resource** object
    type.
    - Display `evidence_class=notional_demo` prominently until replaced by an
      internal inventory source.
+
+All three object types are backed by their uploaded datasets and have governed
+create and modify action types. The objects may briefly show zero instances
+while Foundry's initial indexing job completes.
 
 Recommended action lifecycle:
 
