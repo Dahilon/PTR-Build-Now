@@ -4,6 +4,7 @@
 
 - Workshop: **SF Overdose Response Operations**
   (`ri.workshop.main.module.6dd1494d-d90b-41eb-b947-b365f880ab23`)
+  - Published live version: `v0.5.0`
 - Dataset: `real_events_normalized`
   (`ri.foundry.main.dataset.199d1086-f3a6-43ad-8f59-d074e648a5c9`)
 - Dataset: `real_time_series_weekly`
@@ -50,6 +51,19 @@ The following generated artifacts were uploaded and mapped on 2026-08-07:
 All three object types are backed by their uploaded datasets and have governed
 create and modify action types. The objects may briefly show zero instances
 while Foundry's initial indexing job completes.
+
+Live indexing was verified: 126 Operational Signals and 3 Response Scenarios.
+The ontology also contains:
+
+- **Response Scenario → Operational Signal**, keyed by Target Signal ID.
+- **Response Scenario → Overdose Response Zone**, keyed by Target Zone ID.
+- **Review Response Scenario**, a dedicated human review action that writes an
+  explicit status before operational activation.
+
+The published Workshop is configured with all five relevant ontology types,
+an **Evidence Monitor — Public Aggregate Signals** section, and a
+**Human-Governed Response Deployment** section. The project description was
+also corrected to describe the public-health decision workflow.
 
 Recommended action lifecycle:
 
